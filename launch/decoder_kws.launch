@@ -1,0 +1,15 @@
+<launch>
+    <arg name="hmm"  default="/usr/share/pocketsphinx/model/ru" />
+    <arg name="dict" default="$(find pocketsphinx_ros)/share/voice_cmd_ru.dic" />
+    <arg name="kws" default="$(find pocketsphinx_ros)/share/voice_cmd_ru.kwlist" />
+
+    <!-- Node for publishing audio inputs -->
+    <node name="audio_control" pkg="pocketsphinx_ros" type="send_audio.py" output="screen" />
+
+    <!-- Node for handling audio threads -->
+    <node name="decoder_kws" pkg="pocketsphinx_ros" type="decoder.py" output="screen" >
+        <param name="hmm" value="$(arg hmm)"/>
+        <param name="dict" value="$(arg dict)"/>
+        <param name="kws" value="$(arg kws)"/>
+    </node>
+</launch>

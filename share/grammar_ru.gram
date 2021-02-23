@@ -1,0 +1,8 @@
+#JSGF V1.0;
+grammar robot;
+public <cmd> = <device> ( <stop> | <action> <direction> );
+<device> = ( робот | железяка );
+<stop> = стой ;
+<action> = едь ;
+<direction> = ( вперёд | назад | налево | направо);
+ 
