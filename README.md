@@ -129,7 +129,7 @@ roslaunch pocketsphinx_ros decoder_jsgf.launch
 ### Nodes params
 | name | description | default value
 | --- | --- | ---
-| hmm | path to folder of acoustic model | /usr/share/pocketsphinx/model/en-us/en-us
+| hmm | path to folder of acoustic model | /usr/share/pocketsphinx/model/ru
 | dict  | dictionary file | $(find pocketsphinx_ros)/share/voice_cmd_ru.dic
 | kws   | kwlist file | $(find pocketsphinx_ros)/share/voice_cmd_ru.kwlist
 | gram   | gram file | $(find pocketsphinx_ros)/share/grammar_ru.gram
