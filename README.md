@@ -1,6 +1,9 @@
 # ROS package for pocketsphinx  
-<p>
-<a href="LICENSE"><img src="https://img.shields.io/badge/license-BSD%203-Clause-green.svg" alt="License" /></a>
+<p align="center">
+
+<!-- <add logo> -->
+
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-green.svg)](https://opensource.org/licenses/BSD-3-Clause)
 <!-- <a><img src="https://img.shields.io/badge/ROS-Melodic-blue" alt="ros_version_melodic" /></a> -->
 <a><img src="https://img.shields.io/badge/ROS-Noetic-blue" alt="ros_version_noetic" /></a>
 </p>
