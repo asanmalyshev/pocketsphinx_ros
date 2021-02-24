@@ -97,6 +97,18 @@ class VoiceDecoder(object):
                 for seg in self.decoder.seg():
                     rospy.loginfo("Detected key words: %s ", seg.word)
                     self.decoder.end_utt()
+                    msg = DecodedPhrase()
+                    msg.header.stamp = rospy.Time.now()
+                    msg.phrase = seg.word.lower() 
+                    msg.score = self.decoder.hyp().best_score
+                    self.pub_.publish(msg)
+                self.decoder.start_utt()
+
+        elif self._kws:
+            if self.decoder.hyp() is not None:
+                for seg in self.decoder.seg():
+                    rospy.loginfo("Detected key words: %s ", seg.word)
+                    self.decoder.end_utt()
                     self.pub_.publish(seg.word.lower())
                 self.decoder.start_utt()
 
