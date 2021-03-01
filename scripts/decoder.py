@@ -2,6 +2,7 @@
 
 import os
 import rospy
+import re
 from std_msgs.msg import String, UInt8MultiArray
 from pocketsphinx import pocketsphinx
 from sphinxbase.sphinxbase import *
@@ -71,13 +72,15 @@ class VoiceDecoder(object):
         self.decoder = pocketsphinx.Decoder(config)
 
         if self._gram and self._grammar and self._rule:
-            self.jsgf = Jsgf(self._gram)
+            jsgf = Jsgf(self._gram)
+            self.get_list_of_public_jsgf_rules(self._gram)
+
             if isinstance(self._rule,str):
-                rule = self.jsgf.get_rule(self._grammar + '.' + self._rule)
+                rule = jsgf.get_rule(self._grammar + '.' + self._rule)
                 # rospy.logwarn(rule)
                 if rule is not None:
                     rospy.logwarn("LOAD: Rule <"+ self._rule + "> from grammar <" + self._grammar + ">")
-                    fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
+                    fsg = jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
                     fsg.writefile(self._gram + '.fsg')
                     self.decoder.set_fsg(self._gram, fsg)
                     self.decoder.set_search(self._gram)
@@ -90,14 +93,27 @@ class VoiceDecoder(object):
                 rospy.logerr("LOAD FAILED: rule name must be string")
                 self._rule = None
 
+    def get_list_of_public_jsgf_rules(self, gram_file):
+        if os.path.isfile(gram_file):
+            f = open(gram_file, 'r')
+            lines = f.readlines()
+            rules = []
+            for l in lines:
+                result = re.search(r'public <\S+>', l)
+                if result is not None:
+                    rules.append(re.sub('[<>]','',result.group(0).split()[1]))
+            return rules
+        return None
+
     def pocketspinx_control_cb(self, req):
         response = PocketsphinxControlResponse()
         if req.cmd == req.RULE_CHANGE:
-            rule = self.jsgf.get_rule(self._grammar + '.' + req.rule)
+            jsgf = Jsgf(self._gram)
+            rule = jsgf.get_rule(self._grammar + '.' + req.rule)
             if rule is not None:
                 self._rule = req.rule
                 self.decoder.end_utt()
-                fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
+                fsg = jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
                 fsg.writefile(self._gram + '.fsg')
                 rospy.logwarn("RELOAD: Rule <"+ self._rule + "> from grammar <" + self._grammar + "> is loaded")
                 self.decoder.set_fsg(self._gram, fsg)
@@ -106,7 +122,7 @@ class VoiceDecoder(object):
                 response.rule = self._rule
                 self.decoder.start_utt()
             else:
-                rospy.logwarn("RELOAD FAILED: No rule <"+ self._rule + "> in grammar <" + self._grammar + ">")
+                rospy.logwarn("RELOAD FAILED: No rule <"+ req.rule + "> in grammar <" + self._grammar + ">")
                 response.success = False
 
         elif req.cmd == req.GET_CURRENT_RULE:
@@ -115,6 +131,13 @@ class VoiceDecoder(object):
             else:
                 response.success = True
                 response.rule = self._rule
+        elif req.cmd == req.GET_LIST_RULES:
+            rules =  self.get_list_of_public_jsgf_rules(self._gram)
+            if rules is None: 
+                response.success = False
+            else:
+                response.success = True
+                response.rule = ' '.join(rules)
         return response
 
     def process_audio(self, msg):
