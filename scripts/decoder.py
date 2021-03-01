@@ -70,56 +70,51 @@ class VoiceDecoder(object):
         # Set required configuration for decoder
         self.decoder = pocketsphinx.Decoder(config)
 
-        self._current_rule = None
         if self._gram and self._grammar and self._rule:
             self.jsgf = Jsgf(self._gram)
             if isinstance(self._rule,str):
-                self._rule = [self._rule]
-            for  r in self._rule:
-                rule = self.jsgf.get_rule(self._grammar + '.' + r)
+                rule = self.jsgf.get_rule(self._grammar + '.' + self._rule)
                 # rospy.logwarn(rule)
                 if rule is not None:
-                    self._current_rule = r
-                    rospy.logwarn("LOAD: Rule <"+ r + "> from grammar <" + self._grammar + ">")
+                    rospy.logwarn("LOAD: Rule <"+ self._rule + "> from grammar <" + self._grammar + ">")
+                    fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
+                    fsg.writefile(self._gram + '.fsg')
+                    self.decoder.set_fsg(self._gram, fsg)
+                    self.decoder.set_search(self._gram)
+                    # Start processing input audio
+                    self.decoder.start_utt()
+                    rospy.loginfo("Decoder is successfully started")
                 else:
-                    rospy.logwarn("LOAD FAILED: No rule <"+ r + "> in grammar <" + self._grammar + ">")
-
-            if self._current_rule is not None:
-                fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
-                fsg.writefile(self._gram + '.fsg')
-                self.decoder.set_fsg(self._gram, fsg)
-                self.decoder.set_search(self._gram)
+                    rospy.logwarn("LOAD FAILED: No rule <"+ self._rule + "> in grammar <" + self._grammar + ">")
             else:
-                rospy.logerr("LOAD FAILED: for grammar <" + self._grammar + "> no rule has being loaded")
-
-        # Start processing input audio
-        self.decoder.start_utt()
-        rospy.loginfo("Decoder is successfully started")
+                rospy.logerr("LOAD FAILED: rule name must be string")
+                self._rule = None
 
     def pocketspinx_control_cb(self, req):
         response = PocketsphinxControlResponse()
         if req.cmd == req.RULE_CHANGE:
-            r = req.rule
-            rule = self.jsgf.get_rule(self._grammar + '.' + r)
+            rule = self.jsgf.get_rule(self._grammar + '.' + req.rule)
             if rule is not None:
-                self._current_rule = r
+                self._rule = req.rule
                 self.decoder.end_utt()
                 fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
                 fsg.writefile(self._gram + '.fsg')
-                rospy.logwarn("RELOAD: Rule <"+ r + "> from grammar <" + self._grammar + "> is loaded")
+                rospy.logwarn("RELOAD: Rule <"+ self._rule + "> from grammar <" + self._grammar + "> is loaded")
                 self.decoder.set_fsg(self._gram, fsg)
                 self.decoder.set_search(self._gram)
                 response.success = True
-                response.rule = r
+                response.rule = self._rule
+                self.decoder.start_utt()
             else:
-                rospy.logwarn("RELOAD FAILED: No rule <"+ r + "> in grammar <" + self._grammar + ">")
+                rospy.logwarn("RELOAD FAILED: No rule <"+ self._rule + "> in grammar <" + self._grammar + ">")
                 response.success = False
+
         elif req.cmd == req.GET_CURRENT_RULE:
-            if self._current_rule is None:
+            if self._rule is None:
                 response.success = False
             else:
                 response.success = True
-                response.rule = self._current_rule
+                response.rule = self._rule
         return response
 
     def process_audio(self, msg):
