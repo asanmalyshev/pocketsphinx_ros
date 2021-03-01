@@ -147,3 +147,35 @@ roslaunch pocketsphinx_ros decoder_jsgf.launch
 | --- | --- | ---
 | /sphinx_audio | [std_msgs/UInt8MultiArray](http://docs.ros.org/kinetic/api/std_msgs/html/msg/UInt8MultiArray.html) | processing audio
  
+
+## Pocketsphinx control service
+Service _pocketsphinx_control_ allows to get some info about proccessing rules and change current rule.
+
+### About service
+| Name | Type | Description
+| --- | --- | --- 
+| pocketsphinx_control | srv/PocketsphinxControl | service to control pocketsphinx_ros 
+
+### srv/PocketsphinxControl
+#### Request
+| Argument | Type | Description
+| --- | --- | --- 
+| cmd | uint8 | command to server
+| rule | string | name of rule to add
+
+#### Response
+| Argument | Type | Description
+| --- | --- | --- 
+| success | bool | success of operation
+| rule | string | name of current rule 
+|  |  | list of available rules
+
+#### CMD values
+| Alias | Value | Return value | Description
+| --- | --- | --- | ---
+| GET_CURRENT_RULE | 0 | success = True, rule = _name_of_rule_ | get current recognition rule
+| |  | success = False, rule = ''   | if no rule 
+| RULE_CHANGE | 1 | success = True, rule = _name_of_rule_ | successful update
+| || success = False, rule = '' | no such public rule in jsgf file
+| GET_LIST_RULES | 2 | success = True, rule = _list_of_rules_ | get list of available rules
+

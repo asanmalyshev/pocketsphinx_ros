@@ -124,18 +124,18 @@ class VoiceDecoder(object):
             else:
                 rospy.logwarn("RELOAD FAILED: No rule <"+ req.rule + "> in grammar <" + self._grammar + ">")
                 response.success = False
+                response.rule = ''
 
         elif req.cmd == req.GET_CURRENT_RULE:
             if self._rule is None:
                 response.success = False
+                response.rule = ''
             else:
                 response.success = True
                 response.rule = self._rule
         elif req.cmd == req.GET_LIST_RULES:
             rules =  self.get_list_of_public_jsgf_rules(self._gram)
-            if rules is None: 
-                response.success = False
-            else:
+            if rules is not None: 
                 response.success = True
                 response.rule = ' '.join(rules)
         return response
