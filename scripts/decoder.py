@@ -6,6 +6,8 @@ from std_msgs.msg import String, UInt8MultiArray
 from pocketsphinx import pocketsphinx
 from sphinxbase.sphinxbase import *
 from pocketsphinx_ros.msg import DecodedPhrase
+from pocketsphinx_ros.srv import *
+# PocketsphinxControl, PocketsphinxControlResponse
 
 class VoiceDecoder(object):
     """Class to add keyword spotting functionality"""
@@ -21,6 +23,8 @@ class VoiceDecoder(object):
 
         self.pub_ = rospy.Publisher("decoded_phrase", DecodedPhrase, queue_size=10)
         rospy.Subscriber("sphinx_audio", UInt8MultiArray, self.process_audio)
+
+        rospy.Service('pocketsphinx_control', PocketsphinxControl, self.pocketspinx_control_cb)
 
         rospy.spin()
 
@@ -66,29 +70,57 @@ class VoiceDecoder(object):
         # Set required configuration for decoder
         self.decoder = pocketsphinx.Decoder(config)
 
+        self._current_rule = None
         if self._gram and self._grammar and self._rule:
-            jsgf = Jsgf(self._gram)
+            self.jsgf = Jsgf(self._gram)
             if isinstance(self._rule,str):
                 self._rule = [self._rule]
-            if isinstance(self._grammar,str):
-                self._grammar = [self._grammar]
-            for grammar in self._grammar:
-                for  r in self._rule:
-                    rule = jsgf.get_rule(grammar + '.' + r)
-                    # rospy.logwarn(rule)
-                    if rule is not None:
-                        fsg = jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
-                        fsg.writefile(self._gram + '.fsg')
-                        rospy.logwarn("Rule <"+ r + "> from grammar <" + grammar + "> is loaded")
-                    else:
-                        rospy.logwarn("No rule <"+ r + "> in grammar <" + grammar + ">")
+            for  r in self._rule:
+                rule = self.jsgf.get_rule(self._grammar + '.' + r)
+                # rospy.logwarn(rule)
+                if rule is not None:
+                    self._current_rule = r
+                    rospy.logwarn("LOAD: Rule <"+ r + "> from grammar <" + self._grammar + ">")
+                else:
+                    rospy.logwarn("LOAD FAILED: No rule <"+ r + "> in grammar <" + self._grammar + ">")
 
-            self.decoder.set_fsg(self._gram, fsg)
-            self.decoder.set_search(self._gram)
+            if self._current_rule is not None:
+                fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
+                fsg.writefile(self._gram + '.fsg')
+                self.decoder.set_fsg(self._gram, fsg)
+                self.decoder.set_search(self._gram)
+            else:
+                rospy.logerr("LOAD FAILED: for grammar <" + self._grammar + "> no rule has being loaded")
 
         # Start processing input audio
         self.decoder.start_utt()
         rospy.loginfo("Decoder is successfully started")
+
+    def pocketspinx_control_cb(self, req):
+        response = PocketsphinxControlResponse()
+        if req.cmd == req.RULE_CHANGE:
+            r = req.rule
+            rule = self.jsgf.get_rule(self._grammar + '.' + r)
+            if rule is not None:
+                self._current_rule = r
+                self.decoder.end_utt()
+                fsg = self.jsgf.build_fsg(rule, self.decoder.get_logmath(), 7.5)
+                fsg.writefile(self._gram + '.fsg')
+                rospy.logwarn("RELOAD: Rule <"+ r + "> from grammar <" + self._grammar + "> is loaded")
+                self.decoder.set_fsg(self._gram, fsg)
+                self.decoder.set_search(self._gram)
+                response.success = True
+                response.rule = r
+            else:
+                rospy.logwarn("RELOAD FAILED: No rule <"+ r + "> in grammar <" + self._grammar + ">")
+                response.success = False
+        elif req.cmd == req.GET_CURRENT_RULE:
+            if self._current_rule is None:
+                response.success = False
+            else:
+                response.success = True
+                response.rule = self._current_rule
+        return response
 
     def process_audio(self, msg):
         """Audio processing"""

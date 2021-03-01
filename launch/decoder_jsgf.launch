@@ -3,7 +3,7 @@
     <arg name="dict" default="$(find pocketsphinx_ros)/share/voice_cmd_ru.dic" />
     <arg name="gram" default="$(find pocketsphinx_ros)/share/grammar_ru.gram" />
     <arg name="grammar" default="robot"/>
-    <arg name="rule" default="cmd"/>
+    <arg name="rule" default="[cmd,cmd2]"/>
 
     <!-- Node for publishing audio inputs -->
     <node name="audio_control" pkg="pocketsphinx_ros" type="send_audio.py" output="screen" />
@@ -14,6 +14,6 @@
         <param name="dict" value="$(arg dict)"/>
         <param name="gram" value="$(arg gram)"/>
         <param name="grammar" value="$(arg grammar)"/>
-        <param name="rule" value="$(arg rule)"/>
+        <rosparam param="rule" subst_value="True">$(arg rule)</rosparam>
     </node>
 </launch>

@@ -1,6 +1,8 @@
 #JSGF V1.0;
 grammar robot;
 public <cmd> = <device> ( <stop> | <action> <direction> );
+public <cmd2> = <device> <stop>;
+
 <device> = ( робот | железяка );
 <stop> = стой ;
 <action> = едь ;

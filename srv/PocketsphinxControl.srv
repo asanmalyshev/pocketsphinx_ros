@@ -1,0 +1,8 @@
+uint8 GET_CURRENT_RULE = 0
+uint8 RULE_CHANGE = 1
+
+uint8 cmd
+string rule
+---
+bool success
+string rule
