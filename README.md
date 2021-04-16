@@ -4,9 +4,10 @@
 <!-- <add logo> -->
 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-green.svg)](https://opensource.org/licenses/BSD-3-Clause)
-<!-- <a><img src="https://img.shields.io/badge/ROS-Melodic-blue" alt="ros_version_melodic" /></a> -->
+<a><img src="https://img.shields.io/badge/ROS-Melodic-blue" alt="ros_version_melodic" /></a>
 <a><img src="https://img.shields.io/badge/ROS-Noetic-blue" alt="ros_version_noetic" /></a>
 </p>
+
 Original repository: https://github.com/mikeferguson/pocketsphinx
 
 Also used repository: https://github.com/gorinars/ros_voice_control  
@@ -118,11 +119,11 @@ sudo rm cmusphinx-ru-5.2.tar.gz
 ***Caution: In example above wget utility was used. It doesn't guarantee downloading the latest version of library. Use link to get the latest one.***
 
 ## Launch
-### kws mode:
+### kws mode
 ```shell
 roslaunch pocketsphinx_ros decoder_kws.launch
 ```
-### jsgf mode:
+### jsgf mode
 ```shell
 roslaunch pocketsphinx_ros decoder_jsgf.launch
 ```
@@ -147,3 +148,29 @@ roslaunch pocketsphinx_ros decoder_jsgf.launch
 | --- | --- | ---
 | /sphinx_audio | [std_msgs/UInt8MultiArray](http://docs.ros.org/kinetic/api/std_msgs/html/msg/UInt8MultiArray.html) | processing audio
  
+
+## Pocketsphinx control services
+Services allow some control over package.
+
+### About services
+| Name | Type |  Return value | Description 
+| --- | --- | --- | ---
+| set_rule | srv/PocketsphinxControl | success = True, rule = _name_of_rule_ | set current recognition rule
+| |  | success = False, rule = ''   | 
+| get_current_rule | srv/PocketsphinxControl | success = True, rule = _name_of_rule_ | get current recognition rule
+| |  | success = False, rule = ''   | 
+| get_list_available_rules | srv/PocketsphinxControl | success = True, rule = _list_of_rules_ | get list of available rules
+
+### srv/PocketsphinxControl
+#### Request
+| Argument | Type | Description
+| --- | --- | --- 
+| rule | string | name of rule to add
+
+#### Response
+| Argument | Type | Description
+| --- | --- | --- 
+| success | bool | success of operation
+| rule | string | name of current rule 
+|  |  | list of available rules
+
